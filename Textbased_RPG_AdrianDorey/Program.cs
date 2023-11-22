@@ -9,12 +9,19 @@ namespace Textbased_RPG_AdrianDorey
         static char[,] mapContent;
 
         static char player = 'P';
+        static int playerHealth;
         static int playerPositionX;
         static int playerPositionY;
         
         static char enemy = 'E';
+        static int enemyHealth;
         static int enemyPositionX;
         static int enemyPositionY;
+
+        static char item = '0';
+        static char itemHUD;
+        static int itemPositionX;
+        static int itemPositionY;
 
         static Random randomMovement = new Random();
         static string[] movements = { "XForward", "XBackwards", "None","YForward","YBackward"};
@@ -23,26 +30,30 @@ namespace Textbased_RPG_AdrianDorey
 
         static void Main(string[] args)
         {
+            Console.CursorVisible = false;
+
             mapInit("map.txt");
 
             playerPositionX = 2;
             playerPositionY = 2;
+            playerHealth = 100;
             enemyPositionX = 15;
             enemyPositionY = 10;
-
-            Console.CursorVisible = false;
+            enemyHealth = 100;
+            itemPositionX = 4;
+            itemPositionY = 4;
 
             while (!gameOver)
             {
                 Console.Clear();
                 Console.WriteLine("Textbased RPG - Adrian Dorey");
                 Console.WriteLine();
-
-                drawMap();
-                enemyPosition();
+                ShowHUD();
                 
-
+                drawMap();
+                
                 playerPosition();
+                enemyPosition();
             }
         }
 
@@ -68,9 +79,25 @@ namespace Textbased_RPG_AdrianDorey
                 for (int j = 0; j < mapContent.GetLength(1); j++)
                 {
                     if (i == playerPositionY && j == playerPositionX)
-                        Console.Write(player); // Draw the character
+                    {
+                            Console.Write(player);
+                            attackEnemy();
+                    }
                     else if(i == enemyPositionY && j == enemyPositionX)
-                        Console.Write(enemy);
+                    {
+                        if(enemyHealth == 0)
+                        {
+
+                        }
+                        else
+                        {
+                            Console.Write(enemy);
+                        }
+                    }
+                    else if (i == itemPositionY && j == itemPositionX)
+                    {
+                        playerPickUp();
+                    }
                     else
                         Console.Write(mapContent[i, j]);
                 }
@@ -103,48 +130,93 @@ namespace Textbased_RPG_AdrianDorey
                 if (availableMove(playerPositionX + 1, playerPositionY))
                     playerPositionX++;
             }
+            else if (input.Key == ConsoleKey.Spacebar)
+                return;
             else if (input.Key == ConsoleKey.Escape)
-            {
                 gameOver = true;
-            }
         }
 
         static void enemyPosition()
         {
-            int Movement = randomMovement.Next(0, movements.Length);
+            if (enemyHealth >= 0)
+            {
+                int Movement = randomMovement.Next(0, movements.Length);
 
-            if (movements[Movement] == "XForward")
-            {
-                if (availableMove(enemyPositionX + 1, enemyPositionY))
+                if (movements[Movement] == "None")
+                    return;
+                else
                 {
-                    enemyPositionX++;
-                }
-            }
-            else if (movements[Movement] == "XBackwards")
-            {
-                if (availableMove(enemyPositionX - 1, enemyPositionY))
-                {
-                    enemyPositionX--;
-                }
-            }
-            else if (movements[Movement] == "YForward")
-            {
-                if (availableMove(enemyPositionX, enemyPositionY + 1))
-                {
-                    enemyPositionY++;
-                }
-            }
-            else if (movements[Movement] == "YBackwards")
-            {
-                if (availableMove(enemyPositionX, enemyPositionY - 1))
-                {
-                    enemyPositionY--;
+                    if (movements[Movement] == "XForward")
+                    {
+                        if (availableMove(enemyPositionX + 1, enemyPositionY))
+                        {
+                            enemyPositionX++;
+                        }
+                    }
+                    else if (movements[Movement] == "XBackwards")
+                    {
+                        if (availableMove(enemyPositionX - 1, enemyPositionY))
+                        {
+                            enemyPositionX--;
+                        }
+                    }
+                    else if (movements[Movement] == "YForward")
+                    {
+                        if (availableMove(enemyPositionX, enemyPositionY + 1))
+                        {
+                            enemyPositionY++;
+                        }
+                    }
+                    else if (movements[Movement] == "YBackwards")
+                    {
+                        if (availableMove(enemyPositionX, enemyPositionY - 1))
+                        {
+                            enemyPositionY--;
+                        }
+                    }
                 }
             }
             else
-                return;
+                Console.Write("Enemy is dead");
+        }
+        static void ShowHUD()
+        {
+            Console.WriteLine("Player Health: " + playerHealth);
+            Console.WriteLine("Enemy Health: " + enemyHealth);
+            Console.WriteLine("Item Picked Up: " + itemHUD);
+            Console.WriteLine();
+        }
 
-            Console.WriteLine("Enemy Movement " + movements[Movement]);
+        static void attackEnemy()
+        {
+            if (playerPositionY == enemyPositionY && playerPositionX == enemyPositionX)
+            {
+                if (enemyHealth == 0)
+                    enemyHealth = 0;
+                else
+                    enemyHealth = enemyHealth - 10;
+            }
+        }
+
+        static void playerPickUp()
+        {
+            if (itemPositionX == playerPositionX && itemPositionY == playerPositionY)
+                itemHUD = item;
+            else
+                Console.Write(item);
+        }
+
+        static void attackPlayer()
+        {
+            if (enemyPositionY == playerPositionY && enemyPositionX == playerPositionX)
+            {
+                if (playerHealth == 0)
+                {
+                    gameOver = true;
+                }
+                else
+                    playerHealth = playerHealth - 10;
+            }
         }
 
         static bool availableMove(int x, int y)
