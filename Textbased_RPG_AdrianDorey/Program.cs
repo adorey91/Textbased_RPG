@@ -155,25 +155,25 @@ namespace Textbased_RPG_AdrianDorey
 
             if (input.Key == ConsoleKey.W || input.Key == ConsoleKey.UpArrow)
             {
-                if (availableMove(playerPositionX, playerPositionY - 1))
+                if (checkBoundaries(playerPositionX, playerPositionY - 1))
                     playerPositionY--;
                 attackEnemy();
             }
             else if (input.Key == ConsoleKey.S || input.Key == ConsoleKey.DownArrow)
             {
-                if (availableMove(playerPositionX, playerPositionY + 1))
+                if (checkBoundaries(playerPositionX, playerPositionY + 1))
                     playerPositionY++;
                 attackEnemy();
             }
             else if (input.Key == ConsoleKey.A || input.Key == ConsoleKey.LeftArrow)
             {
-                if (availableMove(playerPositionX - 1, playerPositionY))
+                if (checkBoundaries(playerPositionX - 1, playerPositionY))
                     playerPositionX--;
                 attackEnemy();
             }
             else if (input.Key == ConsoleKey.D || input.Key == ConsoleKey.RightArrow)
             {
-                if (availableMove(playerPositionX + 1, playerPositionY))
+                if (checkBoundaries(playerPositionX + 1, playerPositionY))
                     playerPositionX++;
                 attackEnemy();
             }
@@ -212,28 +212,28 @@ namespace Textbased_RPG_AdrianDorey
                 {
                     if (movements[Movement] == "XForward")
                     {
-                        if (availableMove(enemyPositionX + 1, enemyPositionY))
+                        if (checkBoundaries(enemyPositionX + 1, enemyPositionY))
                         {
                             enemyPositionX++;
                         }
                     }
                     else if (movements[Movement] == "XBackwards")
                     {
-                        if (availableMove(enemyPositionX - 1, enemyPositionY))
+                        if (checkBoundaries(enemyPositionX - 1, enemyPositionY))
                         {
                             enemyPositionX--;
                         }
                     }
                     else if (movements[Movement] == "YForward")
                     {
-                        if (availableMove(enemyPositionX, enemyPositionY + 1))
+                        if (checkBoundaries(enemyPositionX, enemyPositionY + 1))
                         {
                             enemyPositionY++;
                         }
                     }
                     else if (movements[Movement] == "YBackwards")
                     {
-                        if (availableMove(enemyPositionX, enemyPositionY - 1))
+                        if (checkBoundaries(enemyPositionX, enemyPositionY - 1))
                         {
                             enemyPositionY--;
                         }
@@ -339,9 +339,16 @@ namespace Textbased_RPG_AdrianDorey
             }
         }   // player health HUD update
 
-        static bool availableMove(int x, int y) //handles player avoiding boundaries
+
+
+        static bool checkBoundaries(int x, int y) //handles player avoiding boundaries
         {
             return x >= 0 && x < mapContent.GetLength(1) && y >= 0 && y < mapContent.GetLength(0) && mapContent[y, x] != '#';
         }
-    }
+        
+        static bool checkWater(int x, int y)
+        {
+            return x >= 0 && x < mapContent.GetLength(1) && y >= 0 && y<mapContent.GetLength(0) && mapContent[y, x] != 'W';
+        }
+}
 }
