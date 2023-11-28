@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Diagnostics;
-using System.Xml.Serialization;
 
 namespace Textbased_RPG_AdrianDorey
 {
@@ -14,7 +12,7 @@ namespace Textbased_RPG_AdrianDorey
         static int playerHealth;    // players health in form of an int
         static int playerPositionX;
         static int playerPositionY;
-        
+
         static char enemy = 'E';    // represents enemy
         static string enemyStatus;  // enemy health status
         static int enemyHealth;     // enemy health in the form of an int
@@ -26,10 +24,16 @@ namespace Textbased_RPG_AdrianDorey
         static int itemPositionX;
         static int itemPositionY;
 
+        static char item2 = '$';
+        static char item2HUD;
+        static int itemPosition2X;
+        static int itemPosition2Y;
+
         static Random randomMovement = new Random();    // this is a RNG for the enemy movement
-        static string[] movements = { "XForward", "XBackwards", "None","YForward","YBackward"}; // an array to help define enemy movement
-        
+        static string[] movements = { "XForward", "XBackwards", "None", "YForward", "YBackward" }; // an array to help define enemy movement
+
         static bool gameOver = false;   // sets gameplay or quits game depending on logic
+
 
         static void Main(string[] args)
         {
@@ -41,28 +45,37 @@ namespace Textbased_RPG_AdrianDorey
             playerPositionX = 2;
             playerPositionY = 2;
             playerHealth = 100;
-            enemyPositionX = 15;
+            enemyPositionX = 32;
             enemyPositionY = 10;
             enemyHealth = 100;
-            itemPositionX = 4;
+            itemPositionX = 30;
             itemPositionY = 4;
+            itemPosition2X = 4;
+            itemPosition2Y = 13;
 
             while (!gameOver)
             {
                 Console.Clear();
                 Console.WriteLine("Textbased RPG - Adrian Dorey");
                 Console.WriteLine();
-                
+
                 playerUpdate(); // updates HUD health status of player
                 enemyUpdate();  // updates HUD health status of enemy
                 ShowHUD();
-                
+
                 drawMap();
-                
+
+                Console.WriteLine();
+                DisplayLegend();
+
                 playerPosition();   // sets player position 
                 itemPickUp();
+
                 enemyPosition();
             }
+            Console.WriteLine();
+            Console.WriteLine("Game Over, press any key to continue");
+            Console.ReadKey();
         }
 
         static void mapInit(string filePath)   // initializes map from file to mapContent
@@ -93,17 +106,17 @@ namespace Textbased_RPG_AdrianDorey
                     else if (i == enemyPositionY && j == enemyPositionX)
                     {
                         if (enemyHealth == 0)
-                        {
                             Console.Write(' ');
-                        }
                         else
-                        {
                             Console.Write(enemy);
-                        }
                     }
                     else if (i == itemPositionY && j == itemPositionX)
                     {
-                        writeItem();
+                        writeItem("item");
+                    }
+                    else if (i == itemPosition2Y && j == itemPosition2X)
+                    {
+                        writeItem("item2");
                     }
                     else
                     {
@@ -115,133 +128,176 @@ namespace Textbased_RPG_AdrianDorey
                 Console.WriteLine();
             }
         }
-        
-        static void writeItem() // handles item in map
+
+        static void writeItem(string thisItem) // handles item in map
         {
-            if (item != ' ')
+            if (thisItem == "item")
             {
-                Console.ForegroundColor = ConsoleColor.Black;
-                Console.BackgroundColor = ConsoleColor.Green;
-                Console.Write(item);
-                Console.ResetColor();
+                if (item != ' ')
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.BackgroundColor = ConsoleColor.Green;
+                    Console.Write(item);
+                    Console.ResetColor();
+                }
+                else
+                    Console.Write(item);
             }
-            else
-                Console.Write(item);
+            else if (thisItem == "item2")
+            {
+                if (item2 != ' ')
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.BackgroundColor = ConsoleColor.Green;
+                    Console.Write(item2);
+                    Console.ResetColor();
+                }
+                else
+                    Console.Write(item2);
+            }
         }
 
-        static void MapColor(char c)
+        static void MapColor(char c)    // handles map color
         {
-            if (c == '#')
+            switch (c)
             {
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.BackgroundColor = ConsoleColor.DarkGray;
+                case '#':
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.BackgroundColor = ConsoleColor.DarkGray;
+                    break;
+                case 'V':
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.BackgroundColor = ConsoleColor.Red;
+                    break;
+                case '~':
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    break;
+                case '$':
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.BackgroundColor = ConsoleColor.Green;
+                    break;
             }
-            else if (c == 'V')
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.BackgroundColor = ConsoleColor.Red;
-            }
-            else if  (c == 'W')
-            {
-                Console.ForegroundColor = ConsoleColor.Blue;
-                Console.BackgroundColor = ConsoleColor.DarkBlue;
-            }
-        }   // handles map color
+        }
+
+        static void DisplayLegend()
+        {
+            Console.WriteLine("Map Legend:");
+
+            MapColor('#');
+            Console.Write("#");
+            Console.ResetColor();
+            Console.WriteLine(" = Walls");
+
+            MapColor('V');
+            Console.Write("V");
+            Console.ResetColor();
+            Console.WriteLine(" = Lava");
+
+            MapColor('~');
+            Console.Write("~");
+            Console.ResetColor();
+            Console.WriteLine(" = Water");
+
+            MapColor('$');
+            Console.Write("$");
+            Console.ResetColor();
+            Console.WriteLine(" = Money");
+            Console.ResetColor();
+        }
 
         static void playerPosition()
         {
-            ConsoleKeyInfo input;
-            input = Console.ReadKey();
+            ConsoleKeyInfo input = Console.ReadKey();
 
-            if (input.Key == ConsoleKey.W || input.Key == ConsoleKey.UpArrow)
+            int dx = 0, dy = 0;
+
+            if (input.Key == ConsoleKey.W || input.Key == ConsoleKey.UpArrow) dy = -1;
+            else if (input.Key == ConsoleKey.S || input.Key == ConsoleKey.DownArrow) dy = 1;
+            else if (input.Key == ConsoleKey.A || input.Key == ConsoleKey.LeftArrow) dx = -1;
+            else if (input.Key == ConsoleKey.D || input.Key == ConsoleKey.RightArrow) dx = 1;
+            else if (input.Key == ConsoleKey.Spacebar) return;
+            else if (input.Key == ConsoleKey.Escape) gameOver = true;
+
+            if (dx != 0 || dy != 0)
             {
-                if (checkBoundaries(playerPositionX, playerPositionY - 1))
-                    playerPositionY--;
+                int newX = playerPositionX + dx;
+                int newY = playerPositionY + dy;
+
+                if (checkBoundaries(newX, newY))
+                {
+                    playerPositionX = newX;
+                    playerPositionY = newY;
+
+                    char landedChar = mapContent[playerPositionY, playerPositionX];
+                    if (landedChar == 'V')
+                    {
+                        // Player lands on 'V', reduce health
+                        playerHealth -= 5;
+                    }
+                }
                 attackEnemy();
             }
-            else if (input.Key == ConsoleKey.S || input.Key == ConsoleKey.DownArrow)
-            {
-                if (checkBoundaries(playerPositionX, playerPositionY + 1))
-                    playerPositionY++;
-                attackEnemy();
-            }
-            else if (input.Key == ConsoleKey.A || input.Key == ConsoleKey.LeftArrow)
-            {
-                if (checkBoundaries(playerPositionX - 1, playerPositionY))
-                    playerPositionX--;
-                attackEnemy();
-            }
-            else if (input.Key == ConsoleKey.D || input.Key == ConsoleKey.RightArrow)
-            {
-                if (checkBoundaries(playerPositionX + 1, playerPositionY))
-                    playerPositionX++;
-                attackEnemy();
-            }
-            else if (input.Key == ConsoleKey.Spacebar)
-                return;
-            else if (input.Key == ConsoleKey.Escape)
-                gameOver = true;
-        }   // handles player movement
-        
+        }
+
         static void itemPickUp() // handles item pickUp
         {
             if (itemPositionX == playerPositionX && itemPositionY == playerPositionY)
             {
                 if (item == ' ')
-                {
                     Console.Write(" ");
-                }
                 else
                 {
                     itemHUD = '$';
                     item = ' ';
                 }
-
+            }
+            else if (itemPosition2X == playerPositionX && itemPosition2Y == playerPositionY)
+            {
+                if (item2 == ' ')
+                    Console.Write(" ");
+                else
+                {
+                    item2HUD = '$';
+                    item2 = ' ';
+                }
             }
         }
-        
+
         static void enemyPosition()
         {
             if (enemyHealth > 0)
             {
-                int Movement = randomMovement.Next(0, movements.Length);
+                int Direction = randomMovement.Next(0, movements.Length);
 
-                if (movements[Movement] == "None")
-                    return;
-                else
+                int dx = 0, dy = 0;
+
+                if (movements[Direction] == "YBackwards") dy = -1;
+                else if (movements[Direction] == "YForward") dy = 1;
+                else if (movements[Direction] == "XBackwards") dx = -1;
+                else if (movements[Direction] == "XForward") dx = 1;
+                else if (movements[Direction] == "None") return;
+
+                if (dx != 0 || dy != 0)
                 {
-                    if (movements[Movement] == "XForward")
+                    int newEnemyX = enemyPositionX + dx;
+                    int newEnemyY = enemyPositionY + dy;
+
+                    if (checkBoundaries(newEnemyX, newEnemyY))
                     {
-                        if (checkBoundaries(enemyPositionX + 1, enemyPositionY))
+                        enemyPositionX = newEnemyX;
+                        enemyPositionY = newEnemyY;
+
+                        char landedChar = mapContent[enemyPositionY, enemyPositionX];
+                        if (landedChar == 'V')
                         {
-                            enemyPositionX++;
+                            enemyHealth -= 5;
                         }
                     }
-                    else if (movements[Movement] == "XBackwards")
-                    {
-                        if (checkBoundaries(enemyPositionX - 1, enemyPositionY))
-                        {
-                            enemyPositionX--;
-                        }
-                    }
-                    else if (movements[Movement] == "YForward")
-                    {
-                        if (checkBoundaries(enemyPositionX, enemyPositionY + 1))
-                        {
-                            enemyPositionY++;
-                        }
-                    }
-                    else if (movements[Movement] == "YBackwards")
-                    {
-                        if (checkBoundaries(enemyPositionX, enemyPositionY - 1))
-                        {
-                            enemyPositionY--;
-                        }
-                    }
-                    attackPlayer();
                 }
+                attackPlayer();
             }
-        }   // handles enemy movement
+        }   
 
         static void attackEnemy()   // handles attacking enemy
         {
@@ -258,12 +314,7 @@ namespace Textbased_RPG_AdrianDorey
         {
             if (enemyPositionY == playerPositionY && enemyPositionX == playerPositionX)
             {
-                if (playerHealth == 0)
-                {
-                    gameOver = true;
-                }
-                else
-                    playerHealth = playerHealth - 10;
+                playerHealth = playerHealth - 10;
             }
         }
 
@@ -272,83 +323,60 @@ namespace Textbased_RPG_AdrianDorey
             Console.WriteLine("Player Health: " + playerHealth + " || Player Status: " + playerStatus);
             Console.WriteLine("Enemy Health: " + enemyHealth + " || Enemy Status: " + enemyStatus);
             Console.Write("Item Picked Up: ");
-            if (item == ' ')
-            {
-                Console.ForegroundColor = ConsoleColor.Black;
-                Console.BackgroundColor = ConsoleColor.Green;
-                Console.Write(itemHUD);
-                Console.ResetColor();
-            }
+
+            Console.BackgroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.Write(itemHUD);
+            Console.ResetColor();
+            Console.Write(' ');
+            Console.BackgroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = ConsoleColor.Black;
+            Console.Write(item2HUD);
+            Console.ResetColor();
             Console.WriteLine();
+
             Console.WriteLine();
         }
-        
+
         static void enemyUpdate()
         {
             if (enemyHealth <= 0)
-            {
                 enemyStatus = "Enemy Died";
-            }
             else if ((enemyHealth > 0) && (enemyHealth <= 15))
-            {
                 enemyStatus = "Imminent Danger";
-            }
             else if ((enemyHealth > 15) && (enemyHealth <= 50))
-            {
                 enemyStatus = "Badly Hurt";
-            }
             else if ((enemyHealth > 50 && enemyHealth <= 75))
-            {
                 enemyStatus = "Hurt";
-            }
             else if ((enemyHealth > 75 && enemyHealth < 100))
-            {
                 enemyStatus = "Healthy";
-            }
             else if (enemyHealth == 100)
-            {
                 enemyStatus = "Perfectly Healthy";
-            }
-        }   // enemy health HUD update
+        }
 
         static void playerUpdate()
         {
             if (playerHealth <= 0)
             {
                 playerStatus = "Player Died";
+                playerHealth = 0;
+                gameOver = true;
             }
             else if ((playerHealth > 0) && (playerHealth <= 15))
-            {
                 playerStatus = "Imminent Danger";
-            }
             else if ((playerHealth > 15) && (playerHealth <= 50))
-            {
                 playerStatus = "Badly Hurt";
-            }
             else if ((playerHealth > 50 && playerHealth <= 75))
-            {
                 playerStatus = "Hurt";
-            }
             else if ((playerHealth > 75 && playerHealth < 100))
-            {
                 playerStatus = "Healthy";
-            }
             else if (playerHealth == 100)
-            {
                 playerStatus = "Perfectly Healthy";
-            }
-        }   // player health HUD update
-
-
+        }
 
         static bool checkBoundaries(int x, int y) //handles player avoiding boundaries
         {
-            return x >= 0 && x < mapContent.GetLength(1) && y >= 0 && y < mapContent.GetLength(0) && mapContent[y, x] != '#';
+            return x >= 0 && x < mapContent.GetLength(1) && y >= 0 && y < mapContent.GetLength(0) && mapContent[y, x] != '#' && mapContent[y, x] != '~';
         }
-        
-        static bool checkWater(int x, int y)
-        {
-            return x >= 0 && x < mapContent.GetLength(1) && y >= 0 && y<mapContent.GetLength(0) && mapContent[y, x] != 'W';
-        }
-}
+    }
 }
