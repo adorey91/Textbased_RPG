@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Textbased_RPG_AdrianDorey
 {
@@ -30,7 +31,7 @@ namespace Textbased_RPG_AdrianDorey
         static int itemPosition2Y;
 
         static Random randomMovement = new Random();    // this is a RNG for the enemy movement
-        static string[] movements = { "XForward", "XBackwards", "None", "YForward", "YBackward" }; // an array to help define enemy movement
+        static string[] movements = { "XForward", "XBackwards", "YForward", "YBackward" }; // an array to help define enemy movement
 
         static bool gameOver = false;   // sets gameplay or quits game depending on logic
 
@@ -46,7 +47,7 @@ namespace Textbased_RPG_AdrianDorey
             playerPositionY = 2;
             playerHealth = 100;
             enemyPositionX = 32;
-            enemyPositionY = 10;
+            enemyPositionY = 5;
             enemyHealth = 100;
             itemPositionX = 30;
             itemPositionY = 4;
@@ -59,8 +60,8 @@ namespace Textbased_RPG_AdrianDorey
                 Console.WriteLine("Textbased RPG - Adrian Dorey");
                 Console.WriteLine();
 
-                playerUpdate(); // updates HUD health status of player
-                enemyUpdate();  // updates HUD health status of enemy
+                playerUpdate(); 
+                enemyUpdate();
                 ShowHUD();
 
                 drawMap();
@@ -68,10 +69,19 @@ namespace Textbased_RPG_AdrianDorey
                 Console.WriteLine();
                 DisplayLegend();
 
-                playerPosition();   // sets player position 
-                itemPickUp();
+                if (enemyHealth == 0 && itemHUD == '$' && item2HUD == '$')
+                    gameOver = true;
+                else if (playerHealth == 0)
+                    gameOver = true;
+                playerPosition(); 
+                attackEnemy();  
+                itemPickUp();   
 
                 enemyPosition();
+                attackPlayer();
+
+
+
             }
             Console.WriteLine();
             Console.WriteLine("Game Over, press any key to continue");
@@ -93,7 +103,7 @@ namespace Textbased_RPG_AdrianDorey
             }
         }
 
-        static void drawMap() // uses the map content to draw the map includes player, enemy & item
+        static void drawMap() // uses the map content to draw the map includes player, enemy & items
         {
             for (int i = 0; i < mapContent.GetLength(0); i++)
             {
@@ -129,7 +139,7 @@ namespace Textbased_RPG_AdrianDorey
             }
         }
 
-        static void writeItem(string thisItem) // handles item in map
+        static void writeItem(string thisItem) // handles writing item in map
         {
             if (thisItem == "item")
             {
@@ -180,7 +190,7 @@ namespace Textbased_RPG_AdrianDorey
             }
         }
 
-        static void DisplayLegend()
+        static void DisplayLegend() // displays legend on the bottom of the map.
         {
             Console.WriteLine("Map Legend:");
 
@@ -197,7 +207,7 @@ namespace Textbased_RPG_AdrianDorey
             MapColor('~');
             Console.Write("~");
             Console.ResetColor();
-            Console.WriteLine(" = Water");
+            Console.WriteLine(" = Deep Water");
 
             MapColor('$');
             Console.Write("$");
@@ -206,23 +216,23 @@ namespace Textbased_RPG_AdrianDorey
             Console.ResetColor();
         }
 
-        static void playerPosition()
+        static void playerPosition()    // handles player movement depending on keyboard input
         {
             ConsoleKeyInfo input = Console.ReadKey();
 
-            int dx = 0, dy = 0;
+            int dirx = 0, diry = 0;
 
-            if (input.Key == ConsoleKey.W || input.Key == ConsoleKey.UpArrow) dy = -1;
-            else if (input.Key == ConsoleKey.S || input.Key == ConsoleKey.DownArrow) dy = 1;
-            else if (input.Key == ConsoleKey.A || input.Key == ConsoleKey.LeftArrow) dx = -1;
-            else if (input.Key == ConsoleKey.D || input.Key == ConsoleKey.RightArrow) dx = 1;
+            if (input.Key == ConsoleKey.W || input.Key == ConsoleKey.UpArrow) diry = -1;
+            else if (input.Key == ConsoleKey.S || input.Key == ConsoleKey.DownArrow) diry = 1;
+            else if (input.Key == ConsoleKey.A || input.Key == ConsoleKey.LeftArrow) dirx = -1;
+            else if (input.Key == ConsoleKey.D || input.Key == ConsoleKey.RightArrow) dirx = 1;
             else if (input.Key == ConsoleKey.Spacebar) return;
             else if (input.Key == ConsoleKey.Escape) gameOver = true;
 
-            if (dx != 0 || dy != 0)
+            if (dirx != 0 || diry != 0)
             {
-                int newX = playerPositionX + dx;
-                int newY = playerPositionY + dy;
+                int newX = playerPositionX + dirx;
+                int newY = playerPositionY + diry;
 
                 if (checkBoundaries(newX, newY))
                 {
@@ -232,11 +242,9 @@ namespace Textbased_RPG_AdrianDorey
                     char landedChar = mapContent[playerPositionY, playerPositionX];
                     if (landedChar == 'V')
                     {
-                        // Player lands on 'V', reduce health
                         playerHealth -= 5;
                     }
                 }
-                attackEnemy();
             }
         }
 
@@ -264,7 +272,7 @@ namespace Textbased_RPG_AdrianDorey
             }
         }
 
-        static void enemyPosition()
+        static void enemyPosition() //handles enemy position based on random number of an array
         {
             if (enemyHealth > 0)
             {
@@ -276,7 +284,6 @@ namespace Textbased_RPG_AdrianDorey
                 else if (movements[Direction] == "YForward") dy = 1;
                 else if (movements[Direction] == "XBackwards") dx = -1;
                 else if (movements[Direction] == "XForward") dx = 1;
-                else if (movements[Direction] == "None") return;
 
                 if (dx != 0 || dy != 0)
                 {
@@ -295,7 +302,6 @@ namespace Textbased_RPG_AdrianDorey
                         }
                     }
                 }
-                attackPlayer();
             }
         }   
 
@@ -318,19 +324,25 @@ namespace Textbased_RPG_AdrianDorey
             }
         }
 
-        static void ShowHUD()   // handles hud
+        static void ShowHUD()   // handles hud output
         {
             Console.WriteLine("Player Health: " + playerHealth + " || Player Status: " + playerStatus);
             Console.WriteLine("Enemy Health: " + enemyHealth + " || Enemy Status: " + enemyStatus);
             Console.Write("Item Picked Up: ");
 
-            Console.BackgroundColor = ConsoleColor.Green;
-            Console.ForegroundColor = ConsoleColor.Black;
+            if(itemHUD == '$')
+            {
+                Console.BackgroundColor = ConsoleColor.Green;
+                Console.ForegroundColor = ConsoleColor.Black;
+            }
             Console.Write(itemHUD);
             Console.ResetColor();
             Console.Write(' ');
-            Console.BackgroundColor = ConsoleColor.Green;
-            Console.ForegroundColor = ConsoleColor.Black;
+            if(item2HUD == '$')
+            {
+                Console.BackgroundColor = ConsoleColor.Green;
+                Console.ForegroundColor = ConsoleColor.Black;
+            }
             Console.Write(item2HUD);
             Console.ResetColor();
             Console.WriteLine();
@@ -338,10 +350,13 @@ namespace Textbased_RPG_AdrianDorey
             Console.WriteLine();
         }
 
-        static void enemyUpdate()
+        static void enemyUpdate()   // handles enemy health update for HUD
         {
             if (enemyHealth <= 0)
+            {
                 enemyStatus = "Enemy Died";
+                enemyHealth = 0;
+            }
             else if ((enemyHealth > 0) && (enemyHealth <= 15))
                 enemyStatus = "Imminent Danger";
             else if ((enemyHealth > 15) && (enemyHealth <= 50))
@@ -354,13 +369,12 @@ namespace Textbased_RPG_AdrianDorey
                 enemyStatus = "Perfectly Healthy";
         }
 
-        static void playerUpdate()
+        static void playerUpdate()  // handles player Health update for HUD
         {
             if (playerHealth <= 0)
-            {
+            { 
                 playerStatus = "Player Died";
                 playerHealth = 0;
-                gameOver = true;
             }
             else if ((playerHealth > 0) && (playerHealth <= 15))
                 playerStatus = "Imminent Danger";
@@ -374,7 +388,7 @@ namespace Textbased_RPG_AdrianDorey
                 playerStatus = "Perfectly Healthy";
         }
 
-        static bool checkBoundaries(int x, int y) //handles player avoiding boundaries
+        static bool checkBoundaries(int x, int y) //handles player avoiding boundaries & water
         {
             return x >= 0 && x < mapContent.GetLength(1) && y >= 0 && y < mapContent.GetLength(0) && mapContent[y, x] != '#' && mapContent[y, x] != '~';
         }
