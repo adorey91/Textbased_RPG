@@ -20,6 +20,7 @@ namespace Textbased_RPG_AdrianDorey
         static int enemyPositionX;
         static int enemyPositionY;
 
+
         static char item = '$'; // represents pick up
         static char itemHUD;    // represents pick up in HUD
         static int itemPositionX;
@@ -31,7 +32,7 @@ namespace Textbased_RPG_AdrianDorey
         static int itemPosition2Y;
 
         static Random randomMovement = new Random();    // this is a RNG for the enemy movement
-        static string[] movements = { "XForward", "XBackwards", "YForward", "YBackward" }; // an array to help define enemy movement
+        static string[] movements = {"XForward", "XBackwards", "YForward", "YBackward"}; // an array to help define enemy movement
 
         static bool gameOver = false;   // sets gameplay or quits game depending on logic
 
@@ -66,6 +67,8 @@ namespace Textbased_RPG_AdrianDorey
 
                 drawMap();
 
+
+             
                 Console.WriteLine();
                 DisplayLegend();
 
@@ -74,11 +77,9 @@ namespace Textbased_RPG_AdrianDorey
                 else if (playerHealth == 0)
                     gameOver = true;
                 playerPosition(); 
-                attackEnemy();  
                 itemPickUp();   
 
                 enemyPosition();
-                attackPlayer();
 
 
 
@@ -236,13 +237,20 @@ namespace Textbased_RPG_AdrianDorey
 
                 if (checkBoundaries(newX, newY))
                 {
-                    playerPositionX = newX;
-                    playerPositionY = newY;
-
-                    char landedChar = mapContent[playerPositionY, playerPositionX];
-                    if (landedChar == 'V')
+                    if (newX == enemyPositionX && newY == enemyPositionY)
                     {
-                        playerHealth -= 5;
+                        attackEnemy();
+                    }
+                    else
+                    {
+                        playerPositionX = newX;
+                        playerPositionY = newY;
+
+                        char landedChar = mapContent[playerPositionY, playerPositionX];
+                        if (landedChar == 'V')
+                        {
+                            playerHealth -= 5;
+                        }
                     }
                 }
             }
@@ -292,13 +300,20 @@ namespace Textbased_RPG_AdrianDorey
 
                     if (checkBoundaries(newEnemyX, newEnemyY))
                     {
-                        enemyPositionX = newEnemyX;
-                        enemyPositionY = newEnemyY;
-
-                        char landedChar = mapContent[enemyPositionY, enemyPositionX];
-                        if (landedChar == 'V')
+                        if (newEnemyX == playerPositionX && newEnemyY == playerPositionY)
                         {
-                            enemyHealth -= 5;
+                            attackPlayer();
+                        }
+                        else
+                        {
+                            enemyPositionX = newEnemyX;
+                            enemyPositionY = newEnemyY;
+
+                            char landedChar = mapContent[enemyPositionY, enemyPositionX];
+                            if (landedChar == 'V')
+                            {
+                                enemyHealth -= 5;
+                            }
                         }
                     }
                 }
@@ -307,21 +322,15 @@ namespace Textbased_RPG_AdrianDorey
 
         static void attackEnemy()   // handles attacking enemy
         {
-            if (playerPositionY == enemyPositionY && playerPositionX == enemyPositionX)
-            {
-                if (enemyHealth == 0)
-                    enemyHealth = 0;
-                else
-                    enemyHealth = enemyHealth - 10;
-            }
+            if (enemyHealth == 0)
+                enemyHealth = 0;
+            else
+                enemyHealth = enemyHealth - 10;
         }
 
         static void attackPlayer()  // handles attacking player
         {
-            if (enemyPositionY == playerPositionY && enemyPositionX == playerPositionX)
-            {
-                playerHealth = playerHealth - 10;
-            }
+            playerHealth = playerHealth - 10;
         }
 
         static void ShowHUD()   // handles hud output
