@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Textbased_RPG_AdrianDorey
 {
@@ -19,7 +20,8 @@ namespace Textbased_RPG_AdrianDorey
         static int enemyHealth;     // enemy health in the form of an int
         static int enemyPositionX;
         static int enemyPositionY;
-
+        static Random randomMovement = new Random();    // this is a RNG for the enemy movement
+        static int Direction;
 
         static char item = '$'; // represents pick up
         static char itemHUD;    // represents pick up in HUD
@@ -31,11 +33,7 @@ namespace Textbased_RPG_AdrianDorey
         static int itemPosition2X;
         static int itemPosition2Y;
 
-        static Random randomMovement = new Random();    // this is a RNG for the enemy movement
-        static string[] movements = {"XForward", "XBackwards", "YForward", "YBackward"}; // an array to help define enemy movement
-
         static bool gameOver = false;   // sets gameplay or quits game depending on logic
-
 
         static void Main(string[] args)
         {
@@ -55,34 +53,28 @@ namespace Textbased_RPG_AdrianDorey
             itemPosition2X = 4;
             itemPosition2Y = 13;
 
-            while (!gameOver)
-            {
-                Console.Clear();
                 Console.WriteLine("Textbased RPG - Adrian Dorey");
                 Console.WriteLine();
-
+            while (!gameOver)
+            {
                 playerUpdate(); 
                 enemyUpdate();
                 ShowHUD();
 
                 drawMap();
 
-
-             
-                Console.WriteLine();
                 DisplayLegend();
 
                 if (enemyHealth == 0 && itemHUD == '$' && item2HUD == '$')
                     gameOver = true;
                 else if (playerHealth == 0)
                     gameOver = true;
+             
                 playerPosition(); 
                 itemPickUp();   
-
                 enemyPosition();
 
-
-
+                Console.Clear();
             }
             Console.WriteLine();
             Console.WriteLine("Game Over, press any key to continue");
@@ -282,43 +274,56 @@ namespace Textbased_RPG_AdrianDorey
 
         static void enemyPosition() //handles enemy position based on random number of an array
         {
-            if (enemyHealth > 0)
+            if (enemyHealth != 0)
             {
-                int Direction = randomMovement.Next(0, movements.Length);
 
-                int dx = 0, dy = 0;
+                Direction = randomMovement.Next(0, 4);
 
-                if (movements[Direction] == "YBackwards") dy = -1;
-                else if (movements[Direction] == "YForward") dy = 1;
-                else if (movements[Direction] == "XBackwards") dx = -1;
-                else if (movements[Direction] == "XForward") dx = 1;
+                int dx = 0;
+                int dy = 0;
+
+                if (Direction == 0) dy = 1;
+                else if (Direction == 1) dy = -1;
+                else if (Direction == 2) dx = 1;
+                else if (Direction == 3) dx = -1;
 
                 if (dx != 0 || dy != 0)
                 {
                     int newEnemyX = enemyPositionX + dx;
                     int newEnemyY = enemyPositionY + dy;
 
-                    if (checkBoundaries(newEnemyX, newEnemyY))
+                    while (!checkBoundaries(newEnemyX, newEnemyY))
                     {
-                        if (newEnemyX == playerPositionX && newEnemyY == playerPositionY)
-                        {
-                            attackPlayer();
-                        }
-                        else
-                        {
-                            enemyPositionX = newEnemyX;
-                            enemyPositionY = newEnemyY;
+                        Direction = randomMovement.Next(0, 3);
 
-                            char landedChar = mapContent[enemyPositionY, enemyPositionX];
-                            if (landedChar == 'V')
-                            {
-                                enemyHealth -= 5;
-                            }
+                        dx = 0;
+                        dy = 0;
+
+                        if (Direction == 0) dy = 1;
+                        else if (Direction == 1) dy = -1;
+                        else if (Direction == 2) dx = 1;
+                        else if (Direction == 3) dx = -1;
+
+                        newEnemyX = enemyPositionX + dx;
+                        newEnemyY = enemyPositionY + dy;
+                    }
+                        
+                    if (newEnemyX == playerPositionX && newEnemyY == playerPositionY)
+                        attackPlayer();
+                    else
+                    {
+                        enemyPositionX = newEnemyX;
+                        enemyPositionY = newEnemyY;
+
+                        char landedChar = mapContent[enemyPositionY, enemyPositionX];
+                        if (landedChar == 'V')
+                        {
+                            enemyHealth -= 5;
                         }
                     }
                 }
             }
-        }   
+        }
 
         static void attackEnemy()   // handles attacking enemy
         {
