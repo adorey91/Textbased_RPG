@@ -53,10 +53,14 @@ namespace Textbased_RPG_AdrianDorey
             itemPosition2X = 4;
             itemPosition2Y = 13;
 
-                Console.WriteLine("Textbased RPG - Adrian Dorey");
-                Console.WriteLine();
             while (!gameOver)
             {
+                
+                Console.Clear();
+                
+                Console.WriteLine("Textbased RPG - Adrian Dorey");
+                Console.WriteLine();
+                
                 playerUpdate(); 
                 enemyUpdate();
                 ShowHUD();
@@ -64,7 +68,7 @@ namespace Textbased_RPG_AdrianDorey
                 drawMap();
 
                 DisplayLegend();
-
+                
                 if (enemyHealth == 0 && itemHUD == '$' && item2HUD == '$')
                     gameOver = true;
                 else if (playerHealth == 0)
@@ -72,9 +76,9 @@ namespace Textbased_RPG_AdrianDorey
              
                 playerPosition(); 
                 itemPickUp();   
+
                 enemyPosition();
 
-                Console.Clear();
             }
             Console.WriteLine();
             Console.WriteLine("Game Over, press any key to continue");
@@ -231,7 +235,19 @@ namespace Textbased_RPG_AdrianDorey
                 {
                     if (newX == enemyPositionX && newY == enemyPositionY)
                     {
-                        attackEnemy();
+                        if(enemyHealth != 0)
+                            attackEnemy();
+                        else
+                        {
+                            playerPositionX = newX;
+                            playerPositionY = newY;
+
+                            char landedChar = mapContent[playerPositionY, playerPositionX];
+                            if (landedChar == 'V')
+                            {
+                                playerHealth -= 5;
+                            }
+                        }
                     }
                     else
                     {
@@ -277,7 +293,7 @@ namespace Textbased_RPG_AdrianDorey
             if (enemyHealth != 0)
             {
 
-                Direction = randomMovement.Next(0, 4);
+                Direction = randomMovement.Next(0, 4); // random number between 0 & 3
 
                 int dx = 0;
                 int dy = 0;
